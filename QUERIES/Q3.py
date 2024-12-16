@@ -1,28 +1,30 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from datetime import datetime
+import time as t
 
 spark = SparkSession \
     .builder \
     .appName("Streaming Platforms Stats") \
     .getOrCreate()
-    
-netflixPath = "hdfs:/user/user_dc_11/netflix.csv"
+
+netflixPath = "hdfs:/user/user_dc_11/netflix.csv"    
 primePath = "hdfs:/user/user_dc_11/prime.csv"
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Started on =", current_time)
+start = t.time()
 
-listensDF = spark.read.csv(netflixPath, header=True, inferSchema=True)
-listensDF.printSchema()
+netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
+prime = spark.read.csv(primePath, header=True, inferSchema=True)
+print("The number of titles released in 2001 on both platforms")
 
-print("The number of titles released on year 2001 on both platforms")
+netflix_2001 = netflix.select("title", "releaseYear").filter(col("releaseYear") == 2001)
+prime_2001 = prime.select("title", "releaseYear").filter(col("releaseYear") == 2001)
+titles = netflix_2001.union(prime_2001).distinct()
+count = titles.count()
+print(f"The number of titles from 2001 is {count}")
 
-#####
+finish = t.time()
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Ended on =", current_time)
+time = finish - start
+print(f"Time spent: {time}")
 
 spark.stop()

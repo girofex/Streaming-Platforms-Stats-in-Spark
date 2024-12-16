@@ -17,7 +17,7 @@ print("Started on =", current_time)
 listensDF = spark.read.csv(netflixPath, header=True, inferSchema=True)
 listensDF.printSchema()
 
-print("Highest rating")
+print("The tv show(s) that is (are) most distributed")
 
 #####
 
