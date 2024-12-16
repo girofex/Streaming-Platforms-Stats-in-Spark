@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from datetime import datetime
+import time as t
 
 spark = SparkSession \
     .builder \
@@ -9,23 +9,21 @@ spark = SparkSession \
     
 netflixPath = "hdfs:/user/user_dc_11/netflix.csv"
 
-now = datetime.now()
-start = now.strftime("%H:%M:%S")
-print("Started on =", start)
+start = t.time()
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
-print(netflix.columns)
 print("Top 20 highest rated titles on Netflix")
 
-content = netflix.select("Title", "IMDB Score")
-top_titles = content.orderBy(col("IMDB Score").desc())
-top_titles.show(20);
+#had to filter because of bad formatting of the dataset
+content = netflix.filter(~regexp_extract(col("imdbAverageRating"), r"^tt\d+$", 0).rlike("tt\d+"))
+content = netflix.select("title", "imdbAverageRating")
+content = content.filter(col("imdbAverageRating").cast("double").isNotNull())
+top_titles = content.orderBy(col("imdbAverageRating").desc())
+top_titles.show(20, truncate=False);
 
-now = datetime.now()
-finish = now.strftime("%H:%M:%S")
-print("Ended on =", finish)
+finish = t.time()
 
-time_spent = finish - start
-print(f"Time spent: {time_spent}")
+time = finish - start
+print(f"Time spent: {time}")
 
 spark.stop()
