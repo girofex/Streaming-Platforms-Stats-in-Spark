@@ -10,18 +10,22 @@ spark = SparkSession \
 netflixPath = "hdfs:/user/user_dc_11/netflix.csv"
 
 now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Started on =", current_time)
+start = now.strftime("%H:%M:%S")
+print("Started on =", start)
 
-listensDF = spark.read.csv(netflixPath, header=True, inferSchema=True)
-listensDF.printSchema()
+netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
+print(netflix.columns)
+print("Top 20 highest rated titles on Netflix")
 
-print("The 20 most viewed movies on Netflix")
-
-#####
+content = netflix.select("Title", "IMDB Score")
+top_titles = content.orderBy(col("IMDB Score").desc())
+top_titles.show(20);
 
 now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Ended on =", current_time)
+finish = now.strftime("%H:%M:%S")
+print("Ended on =", finish)
+
+time_spent = finish - start
+print(f"Time spent: {time_spent}")
 
 spark.stop()

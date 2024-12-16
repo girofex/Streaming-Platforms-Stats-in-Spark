@@ -2,14 +2,15 @@ import os
 
 os.system('clear')
 
-print('Final assignment of Distributed Computing course')
+print('Final assignment of Distributed Computing course\n')
 print('=========================================')
-query = input('\nSelect which query to run: \n\n\
-1: The 20 most viewed movies on Netflix\n\
+query = input('\nQUERIES: \n\n\
+1: Top 20 highest rated titles on Netflix\n\
 2: The 10 most popular genres on Prime Video\n\
-3: The number of released content in year 2001 on both platforms\n\
-4: Most popular saga on both platforms\n\n\
-5: Highest rating\n\n')
+3: The number of titles released on year 2001 on both platforms\n\
+4: Most popular saga on both platforms\n\
+5: Highest rating\n\n\
+Select which query to run: ')
 
 if query == '1':
     os.system('clear')

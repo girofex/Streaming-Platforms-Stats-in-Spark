@@ -17,7 +17,7 @@ print("Started on =", current_time)
 listensDF = spark.read.csv(netflixPath, header=True, inferSchema=True)
 listensDF.printSchema()
 
-print("The number of released content in year 2001 on both platforms")
+print("The number of titles released on year 2001 on both platforms")
 
 #####
 
