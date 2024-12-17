@@ -8,7 +8,7 @@ query = input('\nQUERIES: \n\n\
 1: Top 20 highest rated titles on Netflix\n\
 2: Top 10 most popular genres on Prime Video\n\
 3: The number of titles released in 2001 on both platforms\n\
-4: Most popular saga on both platforms\n\
+4: Most popular movie present on both platforms\n\
 5: The tv show(s) that is (are) most distributed\n\n\
 Select which query to run: ')
 
