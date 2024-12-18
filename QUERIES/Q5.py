@@ -18,10 +18,15 @@ print("The tv show(s) that is (are) most distributed")
 
 netflix_tv = netflix.filter(col("type") == "tv").select("title", "availableCountries")
 prime_tv = prime.filter(col("type") == "tv").select("title", "availableCountries")
-tv = netflix_tv.join(prime_tv, on="title", how="inner")
-tv = tv.select("title", netflix_tv["imdbAverageRating"])
-most_popular = tv.orderBy(col("imdbAverageRating").desc()).limit(1)
-most_popular.show(truncate=False)
+tv = netflix_tv.union(prime_tv).distinct()
+
+country_array = tv.withColumn("availableCountriesArray", split(col("availableCountries"), ", "))
+country_count = country_array.select("title", "availableCountries", size(col("availableCountriesArray")).alias("count"))
+max_countries = country_count.select(max("count").alias("max")).collect()[0]["max"]
+most_distributed = country_count.filter(col("count") == max_countries)
+
+truncated = most_distributed.withColumn("availableCountries", substring(col("availableCountries"), 1, 100))
+truncated.show(truncate=False)
 
 finish = t.time()
 
