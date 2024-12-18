@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession, functions
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 import time as t
 
