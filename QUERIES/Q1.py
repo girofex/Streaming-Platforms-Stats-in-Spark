@@ -14,10 +14,7 @@ start = t.time()
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 print("Top 20 highest rated titles on Netflix")
 
-#had to filter because of bad formatting of the dataset
-content = netflix.filter(~regexp_extract(col("imdbAverageRating"), r"^tt\d+$", 0).rlike("tt\d+"))
 content = netflix.select("title", "imdbAverageRating")
-content = content.filter(col("imdbAverageRating").cast("double").isNotNull())
 top_titles = content.orderBy(col("imdbAverageRating").desc())
 top_titles.show(20, truncate=False);
 

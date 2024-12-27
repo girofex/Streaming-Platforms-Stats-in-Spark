@@ -14,7 +14,6 @@ start = t.time()
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
 print("Top 10 most popular genres on Prime Video")
 
-#based on the recurrence of the genre
 genres = prime.withColumn("genre", explode(split(col("genres"), ", ")))
 count = genres.groupBy("genre").count()
 top_genres = count.orderBy(col("count").desc())
