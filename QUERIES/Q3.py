@@ -14,13 +14,13 @@ start = t.time()
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
-print("The number of titles released in 2001 on both platforms")
+print("The number of titles released in 2001 on both platforms is")
 
 netflix_2001 = netflix.select("title", "releaseYear").filter(col("releaseYear") == 2001)
 prime_2001 = prime.select("title", "releaseYear").filter(col("releaseYear") == 2001)
 titles = netflix_2001.union(prime_2001).distinct()
 count = titles.count()
-print(f"The number of titles from 2001 is {count}")
+print(count)
 
 finish = t.time()
 

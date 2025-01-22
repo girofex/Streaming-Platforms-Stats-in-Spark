@@ -16,10 +16,8 @@ netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
 print("Most popular movie present on both platforms")
 
-netflix_movies = netflix.filter(col("type") == "movie").select("title", "imdbAverageRating")
-prime_movies = prime.filter(col("type") == "movie").select("title", "imdbAverageRating")
-movies = netflix_movies.join(prime_movies, on="title", how="inner")
-movies = movies.select("title", netflix_movies["imdbAverageRating"])
+join = netflix.join(prime, on=["title", "imdbAverageRating", "type"], how="inner")
+movies = join.select("title", "imdbAverageRating").filter(col("type") == "movie")
 most_popular = movies.orderBy(col("imdbAverageRating").desc()).limit(1)
 most_popular.show(truncate=False)
 
