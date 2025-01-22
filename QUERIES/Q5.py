@@ -20,13 +20,11 @@ netflix_tv = netflix.select("title", "availableCountries").filter(col("type") ==
 prime_tv = prime.select("title", "availableCountries").filter(col("type") == "tv")
 tv = netflix_tv.union(prime_tv).distinct()
 
-country_array = tv.select("title", "availableCountries", split(col("availableCountries"), ", ").alias("availableCountriesArray"))
-country_count = country_array.select("title", "availableCountries", size(col("availableCountriesArray")).alias("count"))
-max_countries = country_count.select(max("count")).first()[0]
-most_distributed = country_count.filter(col("count") == max_countries)
+country_array = tv.select("title", "availableCountries", size(split(col("availableCountries"), ", ")).alias("count"))
+most_distributed = country_array.orderBy(col("count").desc()).limit(1)
+most_distributed_with_truncate = most_distributed.withColumn("availableCountries", substring("availableCountries", 1, 20))
 
-truncated = most_distributed.select("title", substring(col("availableCountries"), 1, 100).alias("availableCountries"), "count")
-truncated.show(truncate=False)
+most_distributed_with_truncate.show(truncate=False)
 
 finish = t.time()
 
