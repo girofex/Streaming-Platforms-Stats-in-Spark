@@ -16,12 +16,10 @@ netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
 print("The tv show(s) that is (are) most distributed")
 
-netflix_tv = netflix.select("title", "availableCountries").filter(col("type") == "tv")
-prime_tv = prime.select("title", "availableCountries").filter(col("type") == "tv")
-tv = netflix_tv.union(prime_tv).distinct()
+union = netflix.union(prime).distinct()
+tv = union.select("title", "availableCountries", size(split(col("availableCountries"), ", ")).alias("count")).filter(col("type") == "tv")
 
-country_array = tv.select("title", "availableCountries", size(split(col("availableCountries"), ", ")).alias("count"))
-most_distributed = country_array.orderBy(col("count").desc()).limit(1)
+most_distributed = tv.orderBy(col("count").desc(), col("title").asc()).limit(1)
 most_distributed_with_truncate = most_distributed.withColumn("availableCountries", substring("availableCountries", 1, 20))
 
 most_distributed_with_truncate.show(truncate=False)

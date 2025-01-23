@@ -16,7 +16,7 @@ print("Top 10 most popular genres on Prime Video")
 
 genres = prime.select("title", explode(split(col("genres"), ", ")).alias("genre"))
 count = genres.groupBy("genre").count()
-top_genres = count.orderBy(col("count").desc())
+top_genres = count.orderBy(col("count").desc(), col("genre").asc())
 top_genres.show(10, truncate=False)
 
 finish = t.time()
