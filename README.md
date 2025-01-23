@@ -98,10 +98,9 @@ spark = SparkSession \
 netflixPath = "hdfs:/user/user_dc_11/netflix.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
-print("Top 20 highest rated titles on Netflix")
 
 content = netflix.select("title", "imdbAverageRating")
-top_titles = content.orderBy(col("imdbAverageRating").desc())
+top_titles = content.orderBy(col("imdbAverageRating").desc(), col("title").asc())
 top_titles.show(20, truncate=False);
 ```
 
@@ -109,7 +108,7 @@ To compute this task I started from Netflix’ dataset.
 <br>
 First of all, I selected <tt>title</tt> and <tt>imdbAverageRating</tt>.
 <br>
-Then I ordered by ratings in descending order.
+Then I ordered by ratings in descending order and titles in alphabetical order.
 <br>
 Finally, I displayed only the top 20.
 
@@ -120,11 +119,10 @@ Finally, I displayed only the top 20.
 primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
-print("Top 10 most popular genres on Prime Video")
 
 genres = prime.select("title", explode(split(col("genres"), ", ")).alias("genre"))
 count = genres.groupBy("genre").count()
-top_genres = count.orderBy(col("count").desc())
+top_genres = count.orderBy(col("count").desc(), col("genre").asc())
 top_genres.show(10, truncate=False)
 ```
 
@@ -132,13 +130,13 @@ I started from Prime’s dataset.
 <br>
 I selected <tt>title</tt>, while to work on the <tt>genres</tt> column I had to split the strings by using the $,$ as a separator.
 <br>
-With <tt>explode()</tt> I took the array column and created a new row for each element in the array.
+With <tt>explode()</tt>, I took the array column and created a new row for each element in the array.
 <br>
 By adding <tt>.alias()</tt> I named the new column, making it accessible for subsequent operations.
 <br>
 Then I grouped by the new created differentiation and counted the total.
 <br>
-Finally, I ordered in descending order and showed the top 10.
+Finally, I ordered the counts in descending order, the genres in alphabetical order, and then showed the top 10.
 
 <h3>Query 3 - The number of titles released in 2001 on both platforms</h3>
 
@@ -149,7 +147,6 @@ primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
-print("The number of titles released in 2001 on both platforms is")
 
 netflix_2001 = netflix.select("title", "releaseYear").filter(col("releaseYear") == 2001)
 prime_2001 = prime.select("title", "releaseYear").filter(col("releaseYear") == 2001)
@@ -175,11 +172,10 @@ primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
-print("Most popular movie present on both platforms")
 
 join = netflix.join(prime, on=["title", "imdbAverageRating", "type"], how="inner")
 movies = join.select("title", "imdbAverageRating").filter(col("type") == "movie")
-most_popular = movies.orderBy(col("imdbAverageRating").desc()).limit(1)
+most_popular = movies.orderBy(col("imdbAverageRating").desc(), col("title").asc()).limit(1)
 most_popular.show(truncate=False)
 ```
 
@@ -189,7 +185,7 @@ To compare them I proceeded with an inner join: this way I specifically looked f
 <br>
 I selected <tt>title</tt> and <tt>imdbAverageRating</tt> and then I filtered by <tt>type</tt>, to consider only the movies.
 <br>
-Finally, I ordered by <tt>imdbAverageRating</tt> in descending order and limited to only the first result.
+Finally, I ordered by <tt>imdbAverageRating</tt> in descending order, by <tt>title</tt> in alphabetical order, and then limited to only the first result.
 
 <h3>Query 5 - The tv show(s) that is (are) most distributed</h3>
 
@@ -200,14 +196,11 @@ primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
-print("The tv show(s) that is (are) most distributed")
 
-netflix_tv = netflix.select("title", "availableCountries").filter(col("type") == "tv")
-prime_tv = prime.select("title", "availableCountries").filter(col("type") == "tv")
-tv = netflix_tv.union(prime_tv).distinct()
+union = netflix.union(prime).distinct()
+tv = union.select("title", "availableCountries", size(split(col("availableCountries"), ", ")).alias("count")).filter(col("type") == "tv")
 
-country_array = tv.select("title", "availableCountries", size(split(col("availableCountries"), ", ")).alias("count"))
-most_distributed = country_array.orderBy(col("count").desc()).limit(1)
+most_distributed = tv.orderBy(col("count").desc(), col("title").asc()).limit(1)
 most_distributed_with_truncate = most_distributed.withColumn("availableCountries", substring("availableCountries", 1, 20))
 
 most_distributed_with_truncate.show(truncate=False)
@@ -215,13 +208,13 @@ most_distributed_with_truncate.show(truncate=False)
 
 I started from both datasets.
 <br>
-I selected <tt>title</tt> and <tt>availableCountries</tt> and filtered by <tt>type</tt> to consider only the tv shows.
-<br>
 To compare the datasets I united them (leaving out the duplicates).
+<br>
+I selected <tt>title</tt> and <tt>availableCountries</tt> and filtered by <tt>type</tt> to consider only the tv shows.
 <br>
 I splitted the <tt>availableCountries</tt> and then counted the number of elements with <tt>size()</tt>.
 <br>
-I selected <tt>title</tt> and the new <tt>count</tt> and then I ordered by it, in descending order, limiting to the first result.
+I ordered by <tt>count</tt> in descending order, by <tt>title</tt> in alphabetical order and I limited to the first result.
 <br>
 For visualization purposes, I truncated the <tt>availableCountries</tt> column, as there are too many values inside: I limited to showing only the first 20 characters.
 
@@ -243,19 +236,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>8.27994704246521</td>
+        <td>8.540767431259155</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>8.39289116859436</td>
+        <td>8.37672758102417</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>8.161475419998169</td>
+        <td>8.14192247390747</td>
       </tr>
       <tr>
         <td>yarn</td>
-        <td>8.740952968597412</td>
+        <td>8.917641401290894</td>
       </tr>
     </table>
   </div>
@@ -269,19 +262,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>12.495877981185913</td>
+        <td>12.267840385437012</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>10.782974004745483</td>
+        <td>10.944337606430054</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>10.486755847930908</td>
+        <td>10.791186332702637</td>
       </tr>
       <tr>
         <td>yarn</td>
-        <td>10.984211206436157</td>
+        <td>11.07402491569519</td>
       </tr>
     </table>
   </div>
@@ -295,19 +288,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>13.94611644744873</td>
+        <td>13.950090169906616</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>11.984129190444946</td>
+        <td>11.783820152282715</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>11.726952075958252</td>
+        <td>11.380483627319336</td>
       </tr>
       <tr>
         <td>yarn</td>
-        <td>16.87930202484131</td>
+        <td>12.656799793243408</td>
       </tr>
     </table>
   </div>
@@ -323,19 +316,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>10.636901140213013</td>
+        <td>10.836611032485962</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>10.529014825820923</td>
+        <td>10.876830339431763</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>10.973711729049683</td>
+        <td>10.711392879486084</td>
       </tr>
       <tr>
         <td>yarn</td>
-        <td>12.650820970535278</td>
+        <td>10.825428485870361</td>
       </tr>
     </table>
   </div>
@@ -349,19 +342,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>14.607071161270142</td>
+        <td>15.221787691116333</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>12.316791534423828</td>
+        <td>12.467206478118896</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>11.788536310195923</td>
+        <td>12.58762264251709</td>
       </tr>
       <tr>
         <td>yarn</td>
-        <td>12.499873638153076</td>
+        <td>12.314280986785889</td>
       </tr>
     </table>
   </div>
@@ -377,10 +370,10 @@ import matplotlib.pyplot as plt
 modes = ['local[1]', 'local[4]', 'local[*]', 'yarn']
 
 values = [
-    12.193182954516604,
-    10.601160144605908,
-    10.627486276626587,
-    12.350832161712626
+    12.163419742640614,
+    10.88978443165792,
+    10.722121791986523,
+    11.157635716777548
 ]
 
 plt.bar(modes, values);
@@ -405,6 +398,6 @@ As we can see, the use of a single thread results in more time when executing lo
 <br>
 With more threads the time decreases.
 <br>
-Using a cluster setup doesn't reduce execution time compared to using threads locally: this is typical scaling behavior for smaller tasks, where there's significant overhead caused by distributing the task across multiple nodes.
+Using a cluster setup doesn't significantly reduce execution time compared to using threads locally: this is typical scaling behavior for smaller tasks, where there's significant overhead caused by distributing the task across multiple nodes.
 <br>
 The local parallelization outperforms distributed execution.
