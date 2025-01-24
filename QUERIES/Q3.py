@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-import time as t
 
 spark = SparkSession \
     .builder \
@@ -9,8 +8,6 @@ spark = SparkSession \
 
 netflixPath = "hdfs:/user/user_dc_11/netflix.csv"    
 primePath = "hdfs:/user/user_dc_11/prime.csv"
-
-start = t.time()
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
@@ -21,10 +18,5 @@ prime_2001 = prime.select("title", "releaseYear").filter(col("releaseYear") == 2
 titles = netflix_2001.union(prime_2001).distinct()
 count = titles.count()
 print(count)
-
-finish = t.time()
-
-time = finish - start
-print(f"Time spent: {time}")
 
 spark.stop()

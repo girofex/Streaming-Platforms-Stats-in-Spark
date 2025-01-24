@@ -1,4 +1,4 @@
-import os
+import os, time as t
 
 os.system('clear')
 
@@ -21,11 +21,11 @@ query_paths = {
     '5': 'QUERIES/Q5.py'
 }
 
-master_configs = [
+configs = [
     "local[1]",
     "local[4]",
     "local[*]",
-    "yarn"
+    "cluster"
 ]
 
 if query not in query_paths:
@@ -37,12 +37,24 @@ else:
     query_script = query_paths[query]
     print(f'\nRunning Q{query} with different configurations\n')
     
-    for master in master_configs:
+    for mode in configs:
         print('=========================================')
-        print(f'\nMaster = {master}:\n')
+        print(f'Mode = {mode}:\n')
+
+        start = t.time()
         
-        spark_command = f'spark-submit --master {master} {query_script} 2> /dev/null'
+        if (mode != "cluster"):
+            spark_command = f'spark-submit --master {mode} {query_script} 2> /dev/null'
+
+        else:
+            spark_command = f'spark-submit --master yarn --deploy-mode cluster {query_script}'
+
         exit_code = os.system(spark_command)
         
         if exit_code != 0:
             print("Error")
+
+        finish = t.time()
+
+        time = finish - start
+        print(f"Time spent: {time}")
