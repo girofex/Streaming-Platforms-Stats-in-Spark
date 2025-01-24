@@ -98,6 +98,7 @@ spark = SparkSession \
 netflixPath = "hdfs:/user/user_dc_11/netflix.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
+print("Top 20 highest rated titles on Netflix")
 
 content = netflix.select("title", "imdbAverageRating")
 top_titles = content.orderBy(col("imdbAverageRating").desc(), col("title").asc())
@@ -119,6 +120,7 @@ Finally, I displayed only the top 20.
 primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
+print("Top 10 most popular genres on Prime Video")
 
 genres = prime.select("title", explode(split(col("genres"), ", ")).alias("genre"))
 count = genres.groupBy("genre").count()
@@ -132,7 +134,7 @@ I selected <tt>title</tt>, while to work on the <tt>genres</tt> column I had to 
 <br>
 With <tt>explode()</tt>, I took the array column and created a new row for each element in the array.
 <br>
-By adding <tt>.alias()</tt> I named the new column, making it accessible for subsequent operations.
+By adding <tt>.alias()</tt>, I named the new column, making it accessible for subsequent operations.
 <br>
 Then I grouped by the new created differentiation and counted the total.
 <br>
@@ -147,6 +149,7 @@ primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
+print("The number of titles released in 2001 on both platforms is")
 
 netflix_2001 = netflix.select("title", "releaseYear").filter(col("releaseYear") == 2001)
 prime_2001 = prime.select("title", "releaseYear").filter(col("releaseYear") == 2001)
@@ -172,6 +175,7 @@ primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
+print("Most popular movie present on both platforms")
 
 join = netflix.join(prime, on=["title", "imdbAverageRating", "type"], how="inner")
 movies = join.select("title", "imdbAverageRating").filter(col("type") == "movie")
@@ -196,6 +200,7 @@ primePath = "hdfs:/user/user_dc_11/prime.csv"
 
 netflix = spark.read.csv(netflixPath, header=True, inferSchema=True)
 prime = spark.read.csv(primePath, header=True, inferSchema=True)
+print("The tv show(s) that is (are) most distributed")
 
 union = netflix.union(prime).distinct()
 tv = union.select("title", "availableCountries", size(split(col("availableCountries"), ", ")).alias("count")).filter(col("type") == "tv")
@@ -219,12 +224,13 @@ I ordered by <tt>count</tt> in descending order, by <tt>title</tt> in alphabetic
 For visualization purposes, I truncated the <tt>availableCountries</tt> column, as there are too many values inside: I limited to showing only the first 20 characters.
 
 <h2>P3</h2>
-To analyze the execution statistic, I run the tasks with different configurations:
+To analyze the execution statistics, I run the tasks with different configurations:
 
-* <tt>local[1]</tt>
-* <tt>local[4]</tt>
-* <tt>local[*]</tt>
-* <tt>yarn</tt>
+* local:
+  * <tt>local[1]</tt>
+  * <tt>local[4]</tt>
+  * <tt>local[*]</tt>
+* cluster mode: <tt>--deploy-mode cluster</tt>
 
 <div style="display: flex">
   <div style="display: inline-block; padding: 15px">
@@ -236,19 +242,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>8.540767431259155</td>
+        <td>14.947357892990112</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>8.37672758102417</td>
+        <td>14.910684585571289</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>8.14192247390747</td>
+        <td>14.70130181312561</td>
       </tr>
       <tr>
-        <td>yarn</td>
-        <td>8.917641401290894</td>
+        <td>cluster</td>
+        <td>45.04324817657471</td>
       </tr>
     </table>
   </div>
@@ -262,19 +268,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>12.267840385437012</td>
+        <td>19.41291379928589</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>10.944337606430054</td>
+        <td>17.38865041732788</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>10.791186332702637</td>
+        <td>17.89185929298401</td>
       </tr>
       <tr>
-        <td>yarn</td>
-        <td>11.07402491569519</td>
+        <td>cluster</td>
+        <td>47.20501160621643</td>
       </tr>
     </table>
   </div>
@@ -288,19 +294,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>13.950090169906616</td>
+        <td>20.917056560516357</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>11.783820152282715</td>
+        <td>18.775816679000854</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>11.380483627319336</td>
+        <td>18.863206148147583</td>
       </tr>
       <tr>
-        <td>yarn</td>
-        <td>12.656799793243408</td>
+        <td>cluster</td>
+        <td>45.93379831314087</td>
       </tr>
     </table>
   </div>
@@ -316,19 +322,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>10.836611032485962</td>
+        <td>17.817253351211548</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>10.876830339431763</td>
+        <td>17.331104516983032</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>10.711392879486084</td>
+        <td>17.46994924545288</td>
       </tr>
       <tr>
-        <td>yarn</td>
-        <td>10.825428485870361</td>
+        <td>cluster</td>
+        <td>47.214582681655884</td>
       </tr>
     </table>
   </div>
@@ -342,19 +348,19 @@ To analyze the execution statistic, I run the tasks with different configuration
       </tr>
       <tr>
         <td>local[1]</td>
-        <td>15.221787691116333</td>
+        <td>22.48262047767639</td>
       </tr>
       <tr>
         <td>local[4]</td>
-        <td>12.467206478118896</td>
+        <td>19.410195112228394</td>
       </tr>
       <tr>
         <td>local[*]</td>
-        <td>12.58762264251709</td>
+        <td>19.47277045249939</td>
       </tr>
       <tr>
-        <td>yarn</td>
-        <td>12.314280986785889</td>
+        <td>cluster</td>
+        <td>54.80287432670593</td>
       </tr>
     </table>
   </div>
@@ -367,13 +373,13 @@ I calculated the average of the execution time with each mode:
 ```python
 import matplotlib.pyplot as plt
 
-modes = ['local[1]', 'local[4]', 'local[*]', 'yarn']
+modes = ['local[1]', 'local[4]', 'local[*]', 'cluster']
 
 values = [
-    12.163419742640614,
-    10.88978443165792,
-    10.722121791986523,
-    11.157635716777548
+    19.115440416336058,
+    17.563290262222316,
+    17.679817390441896,
+    48.03990302085879
 ]
 
 plt.bar(modes, values);
@@ -398,6 +404,6 @@ As we can see, the use of a single thread results in more time when executing lo
 <br>
 With more threads the time decreases.
 <br>
-Using a cluster setup doesn't significantly reduce execution time compared to using threads locally: this is typical scaling behavior for smaller tasks, where there's significant overhead caused by distributing the task across multiple nodes.
+Using a cluster setup doesn't reduce execution time compared to using threads locally: this is typical scaling behavior for smaller tasks, where there's significant overhead caused by distributing the task across multiple nodes.
 <br>
 The local parallelization outperforms distributed execution.
